@@ -207,10 +207,41 @@ st.markdown(f"""
 
 /* Hide Streamlit Header & Padding */
 header[data-testid="stHeader"] {{ visibility: hidden; }}
-.main .block-container {{ padding-top: 1.5rem; padding-bottom: 0rem; max-width: 95%; }}
+.main .block-container {{ padding-top: 1.5rem; padding-bottom: 120px; max-width: 95%; }}
 
 /* Fix background */
 .stApp {{ background: {BG}; }}
+
+/* Fixed Input Bar at Bottom - Centered in Content Area */
+div[data-testid="stForm"] {{
+    position: fixed;
+    bottom: 30px;
+    left: 45%; /* Slightly right to account for sidebar */
+    transform: translateX(-50%);
+    width: 50%;
+    max-width: 750px;
+    background: {CARD} !important;
+    border: 1px solid {BORDER} !important;
+    border-radius: 20px !important;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.3) !important;
+    z-index: 1001;
+    padding: 10px 20px !important;
+}}
+
+/* For smaller screens, adjust centering */
+@media (max-width: 1200px) {{
+    div[data-testid="stForm"] {{ width: 70%; left: 50%; }}
+}}
+@media (max-width: 800px) {{
+    div[data-testid="stForm"] {{ width: 90%; left: 50%; bottom: 10px; }}
+}}
+
+/* Chat Bubble Layout - Centered */
+.chat-container-wrap {{
+    max-width: 800px;
+    margin: 0 auto;
+    width: 100%;
+}}
 
 /* Chat Bubble Styles */
 .row-user, .row-bot {{
@@ -685,7 +716,7 @@ with st.sidebar:
 
     st.markdown("</div>", unsafe_allow_html=True)
 
-# ── Main Layout: ChatGPT Style ─────────────────────
+# ── Main Layout: Integrated ChatGPT Style ─────────────────────
 
 st.title("📰 NewsMate AI")
 st.caption("Your real-time India news assistant 🇮🇳")
@@ -694,54 +725,54 @@ col_chat, col_right = st.columns([7, 3], gap="medium")
 
 with col_right:
     st.subheader("🔴 LIVE HIGHLIGHTS")
-    # Independent scrollable news panel using st.container(height)
-    with st.container(height=650):
-        if "highlights" not in st.session_state:
-            h_arts, _ = fetch_by_category("general")
-            st.session_state.highlights = h_arts
-        
-        h_arts = st.session_state.highlights or st.session_state.articles
-        if h_arts:
-            for i, a in enumerate(h_arts[:15], 1):
-                st.markdown(f"""
-                <div class='rcard' onclick="window.open('{a.get('url','#')}', '_blank')">
-                    <div class='rcard-t'>{a.get('title','No title')}</div>
-                    <div class='rcard-src'>{a.get('source',{}).get('name','Unknown')} · {fmt_time(a.get('publishedAt',''))}</div>
-                </div>""", unsafe_allow_html=True)
-        else:
-            st.info("No highlights yet.")
+    # Standard container (auto-height)
+    if "highlights" not in st.session_state:
+        h_arts, _ = fetch_by_category("general")
+        st.session_state.highlights = h_arts
+    
+    h_arts = st.session_state.highlights or st.session_state.articles
+    if h_arts:
+        for i, a in enumerate(h_arts[:15], 1):
+            st.markdown(f"""
+            <div class='rcard' onclick="window.open('{a.get('url','#')}', '_blank')">
+                <div class='rcard-t'>{a.get('title','No title')}</div>
+                <div class='rcard-src'>{a.get('source',{}).get('name','Unknown')} · {fmt_time(a.get('publishedAt',''))}</div>
+            </div>""", unsafe_allow_html=True)
+    else:
+        st.info("No highlights yet.")
 
 with col_chat:
-    # Independent scrollable chat container using st.container(height)
-    chat_container = st.container(height=600)
+    # Centered wrapper for messages
+    st.markdown("<div class='chat-container-wrap'>", unsafe_allow_html=True)
     
-    with chat_container:
-        if not st.session_state.messages:
-            st.session_state.messages.append({
-                "role": "bot",
-                "content": "👋 **Welcome to NewsMate AI!** I'm your real-time news assistant for India. <br><br>Try asking for:<br>• *Latest tech news*<br>• *Mumbai weather updates*<br>• *Explain the current economy news*"
-            })
+    if not st.session_state.messages:
+        st.session_state.messages.append({
+            "role": "bot",
+            "content": "👋 **Welcome to NewsMate AI!** I'm your real-time news assistant for India. <br><br>Try asking for:<br>• *Latest tech news*<br>• *Mumbai weather updates*<br>• *Explain the current economy news*"
+        })
 
-        for msg in st.session_state.messages:
-            role_class = "row-user" if msg["role"] == "user" else "row-bot"
-            bub_class = "bub-user" if msg["role"] == "user" else "bub-bot"
-            av_class = "av-user" if msg["role"] == "user" else "av-bot"
-            icon = "👤" if msg["role"] == "user" else "🤖"
-            
-            if msg["role"] == "user":
-                st.markdown(f"""
-                <div class='{role_class}'>
-                    <div class='{bub_class}'>{msg['content']}</div>
-                    <div class='av {av_class}'>{icon}</div>
-                </div>""", unsafe_allow_html=True)
-            else:
-                st.markdown(f"""
-                <div class='{role_class}'>
-                    <div class='av {av_class}'>{icon}</div>
-                    <div class='{bub_class}'>{msg['content']}</div>
-                </div>""", unsafe_allow_html=True)
+    for msg in st.session_state.messages:
+        role_class = "row-user" if msg["role"] == "user" else "row-bot"
+        bub_class = "bub-user" if msg["role"] == "user" else "bub-bot"
+        av_class = "av-user" if msg["role"] == "user" else "av-bot"
+        icon = "👤" if msg["role"] == "user" else "🤖"
+        
+        if msg["role"] == "user":
+            st.markdown(f"""
+            <div class='{role_class}'>
+                <div class='{bub_class}'>{msg['content']}</div>
+                <div class='av {av_class}'>{icon}</div>
+            </div>""", unsafe_allow_html=True)
+        else:
+            st.markdown(f"""
+            <div class='{role_class}'>
+                <div class='av {av_class}'>{icon}</div>
+                <div class='{bub_class}'>{msg['content']}</div>
+            </div>""", unsafe_allow_html=True)
     
-    # Input remains fixed below the container (page won't scroll if we keep height tight)
+    st.markdown("</div>", unsafe_allow_html=True) # End chat-container-wrap
+    
+    # Input remains fixed at bottom via CSS (targeting stForm)
     with st.form("chat_form", clear_on_submit=True):
         c1, c2 = st.columns([8, 2])
         with c1:
@@ -756,12 +787,4 @@ with col_chat:
             st.session_state.messages.append({"role": "bot", "content": reply})
         st.rerun()
 
-# JavaScript for auto-scrolling (Streamlit containers handle this mostly but this helps)
-st.markdown("""
-<script>
-    var containers = document.querySelectorAll('[data-testid="stVerticalBlockBorderWrapper"]');
-    containers.forEach(el => {
-        el.scrollTop = el.scrollHeight;
-    });
-</script>
-""", unsafe_allow_html=True)
+# No JavaScript needed for container scroll if we use page scroll
